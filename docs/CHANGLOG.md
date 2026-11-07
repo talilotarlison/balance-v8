@@ -1,5 +1,11 @@
 # Changelog — Balance
 
+## 2026-11-07 — Lembretes, logs e dados individuais por usuário
+
+- Criada a página de lembretes e adicionada a apresentação dos lembretes no dashboard.
+- Criada uma tabela para registrar logs do sistema.
+- O sistema suporta vários usuários, mantendo os dados de cada um individualizados.
+
 ## 2026-11-07 — Exclusão segura de bancos e categorias
 
 - Adicionados botões de exclusão nos cartões de bancos e categorias, com confirmação antes do envio.
@@ -223,4 +229,3 @@
 
 - Foram feitas alterações de apresentação e classes visuais. Os fluxos PHP, consultas, autenticação, registros e estrutura do banco não foram modificados nesta entrega.
 - A revisão de cores cobriu as páginas e componentes encontrados na estrutura do projeto. Não foram executados testes nem validação visual em navegador nesta etapa.
-

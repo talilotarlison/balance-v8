@@ -66,7 +66,7 @@ Criada por `database/scripts/categorias.sql`:
 | `cor` | `CHAR(7)` | Cor da categoria definida pela regra da aplicação. |
 | `criado_em` | `TIMESTAMP DEFAULT CURRENT_TIMESTAMP` | Data/hora de criação. |
 
-### `links` (lembretes)
+### `links` (links de lembretes)
 
 A tabela legada `links` agora é usada pelo módulo de lembretes. `database/scripts/lembretes.sql` migra sua estrutura existente:
 
@@ -75,6 +75,7 @@ A tabela legada `links` agora é usada pelo módulo de lembretes. `database/scri
 | `id` | `INT AUTO_INCREMENT`, chave primária | Identificador do lembrete. |
 | `usuario_id` | `INT`, anulável, FK para `login.id` | Dono do lembrete; novos registros recebem o usuário autenticado. Registros antigos permanecem nulos até serem atribuídos manualmente com segurança. |
 | `nome` | `VARCHAR(255)` | Título/nome obrigatório. |
+| `descricao` | `TEXT`, anulável | Descrição opcional do lembrete. |
 | `email` | `VARCHAR(255)`, anulável | Contato opcional. |
 | `telefone` | `VARCHAR(30)`, anulável | Contato opcional. |
 | `url` | `VARCHAR(255)` | URL opcional; a aplicação grava string vazia quando não informada para manter compatibilidade com a coluna legada `NOT NULL`. |

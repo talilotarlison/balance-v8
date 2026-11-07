@@ -5,6 +5,7 @@ O Balance é um sistema de gerenciamento de finanças pessoais desenvolvido em P
 ## Funcionalidades
 
 - Cadastro e autenticação de usuários.
+- Suporte a vários usuários, com dados financeiros individualizados e separados por conta.
 - Cadastro de entradas, saídas e lançamentos agendados.
 - Edição, visualização e exclusão de lançamentos, com confirmação para excluir.
 - Escolha da data do lançamento, banco e categoria.
@@ -12,8 +13,9 @@ O Balance é um sistema de gerenciamento de finanças pessoais desenvolvido em P
 - Filtros combináveis por tipo de lançamento e tipo de banco.
 - Cadastro de bancos/carteiras com tipo, cor, descrição e data de criação.
 - Cadastro de categorias de entrada, saída e lançamentos agendados, com cores padronizadas.
-- Cadastro de lembretes com data prevista, email/telefone/URL opcionais e marcação de conclusão.
+- Página de lembretes com cadastro, data prevista, email/telefone/URL opcionais e marcação de conclusão; os lembretes também são apresentados no dashboard.
 - Dashboard com totais, gráfico, calendário, lançamentos recentes, saldos por banco e lançamentos recentes por categoria.
+- Registro de eventos de login em uma tabela de logs do sistema.
 - Tema claro e escuro com preferência salva no perfil.
 - Interface responsiva baseada em Materialize.
 - Lembrete para organizar tarefas.
@@ -71,6 +73,8 @@ As versões e extensões declaradas no `composer.json` são requisitos de depend
 7. Acesse o projeto pelo navegador, por exemplo `http://localhost/balance-v8/`, e crie uma conta pela página de cadastro.
 
 > Os scripts SQL versionados não foram executados automaticamente. Consulte [docs/DATABASE.MD](docs/DATABASE.MD) para detalhes do esquema, dependências e diferenças entre os dumps. Antes de migrar uma base existente, confirme o esquema real e tenha backup restaurável.
+
+- Possue na pasta databese o codigo sql para construção do banco no mySql ou MariaDB.
 
 ## Estrutura do projeto
 
