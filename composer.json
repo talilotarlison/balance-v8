@@ -1,0 +1,16 @@
+{
+	"name": "talilo-tarlison/balance",
+	"description": "Projeto de controle financeiro em PHP.",
+	"homepage": "http://github.com/talilo-tarlison",
+	"type": "project",
+	"license": "GPL-3.0",
+	"require": {
+		"php": ">=7.4",
+		"ext-mysqli": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"App\\": "src/"
+		}
+	}
+}
