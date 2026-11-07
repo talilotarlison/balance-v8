@@ -1,3 +1,12 @@
 RewriteEngine On
-RewriteCond %{REQUEST_URI} !public/
-RewriteRule (.*) public/$1 [L]
+
+# Define o index.php da raiz como página inicial
+DirectoryIndex index.php
+
+# Não reescreve arquivos e diretórios existentes
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Redireciona as demais requisições para public/
+RewriteRule ^(.*)$ public/$1 [L]
