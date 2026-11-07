@@ -7,14 +7,16 @@
     public $preco;
     public $descricao;
     public $data;
+    public $usuarioId;
 
-    public function __construct($id, $tipo,$nome,$preco,$descricao, $data) {
+    public function __construct($id, $tipo,$nome,$preco,$descricao, $data, $usuarioId = 0) {
       $this->id = $id;
       $this->tipo = $tipo;
       $this->nome = $nome;
       $this->preco = $preco;
       $this->descricao = $descricao;
       $this->data = $data;
+      $this->usuarioId = (int) $usuarioId;
     }
     
     public function getNome(){
@@ -27,8 +29,8 @@
   }
 
   class Update extends Dados{
-    public function __construct($id, $tipo,$nome,$preco,$descricao, $data){
-        parent::__construct($id, $tipo,$nome,$preco,$descricao, $data);
+    public function __construct($id, $tipo,$nome,$preco,$descricao, $data, $usuarioId = 0){
+        parent::__construct($id, $tipo,$nome,$preco,$descricao, $data, $usuarioId);
       }
 
     public function getTipo(){
@@ -40,15 +42,16 @@
     }
 
     public function atualizarDados() {
-    $query = "UPDATE fluxocaixa SET tipo='".ucfirst($this->tipo)."', nome='".ucfirst($this->nome)."', preco='".$this->preco."', disc='".ucfirst($this->descricao)."' WHERE id = '".$this->id. "'";
+    if ($this->usuarioId < 1) return 'SELECT 1 WHERE 1 = 0';
+    $query = "UPDATE fluxocaixa SET tipo='".ucfirst($this->tipo)."', nome='".ucfirst($this->nome)."', preco='".$this->preco."', disc='".ucfirst($this->descricao)."' WHERE id = '".(int) $this->id."' AND usuario_id = '".$this->usuarioId."'";
     return $query;
     }
 
   }
 
   class Insert extends Dados{
-    public function __construct($id, $tipo,$nome,$preco,$descricao, $data){
-        parent::__construct($id, $tipo,$nome,$preco,$descricao, $data);
+    public function __construct($id, $tipo,$nome,$preco,$descricao, $data, $usuarioId = 0){
+        parent::__construct($id, $tipo,$nome,$preco,$descricao, $data, $usuarioId);
       }
 
     public function getPreco(){
@@ -60,7 +63,8 @@
     }
 
     public function inserirDados() {
-        $query = "INSERT INTO fluxocaixa VALUES(null,'".ucfirst($this->tipo)."', '".ucfirst($this->nome)."', '".$this->preco."', '".ucfirst($this->descricao)."', '".$this->data."')";
+        if ($this->usuarioId < 1) return 'SELECT 1 WHERE 1 = 0';
+        $query = "INSERT INTO fluxocaixa (usuario_id, tipo, nome, preco, disc, data) VALUES ('".$this->usuarioId."','".ucfirst($this->tipo)."', '".ucfirst($this->nome)."', '".$this->preco."', '".ucfirst($this->descricao)."', '".$this->data."')";
         return $query;
       }
 

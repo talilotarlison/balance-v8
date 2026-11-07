@@ -2,22 +2,23 @@
   <h4 class="center-align" style="margin-bottom: 1.5rem;">Todos os Lançamentos</h4>
   <?php
     $usuarioFiltroLancamento = (int) ($_SESSION['idUser'] ?? 0);
-    $tiposBancoFiltro = [];
-    $stmtTiposBancoFiltro = $conexao->prepare('SELECT DISTINCT tipo FROM bancos WHERE usuario_id = ? ORDER BY tipo');
-    if ($stmtTiposBancoFiltro) {
-      $stmtTiposBancoFiltro->bind_param('i', $usuarioFiltroLancamento);
-      if ($stmtTiposBancoFiltro->execute()) {
-        $stmtTiposBancoFiltro->bind_result($tipoBancoDisponivel);
-        while ($stmtTiposBancoFiltro->fetch()) $tiposBancoFiltro[] = $tipoBancoDisponivel;
+    $bancosFiltroLancamento = [];
+    $stmtBancosFiltro = $conexao->prepare('SELECT id, nome FROM bancos WHERE usuario_id = ? ORDER BY nome, id');
+    if ($stmtBancosFiltro) {
+      $stmtBancosFiltro->bind_param('i', $usuarioFiltroLancamento);
+      if ($stmtBancosFiltro->execute()) {
+        $stmtBancosFiltro->bind_result($idBancoDisponivel, $nomeBancoDisponivel);
+        while ($stmtBancosFiltro->fetch()) $bancosFiltroLancamento[] = ['id' => (int) $idBancoDisponivel, 'nome' => $nomeBancoDisponivel];
       }
-      $stmtTiposBancoFiltro->close();
+      $stmtBancosFiltro->close();
     }
 
     $tiposLancamentoValidos = ['Entrada', 'Saida', 'Agendado'];
     $filtroTipoLancamento = $_GET['tipo'] ?? '';
-    $filtroTipoBanco = $_GET['tipo_banco'] ?? '';
+    $filtroBancoId = filter_var($_GET['banco_id'] ?? 0, FILTER_VALIDATE_INT);
     if (!is_string($filtroTipoLancamento) || !in_array($filtroTipoLancamento, $tiposLancamentoValidos, true)) $filtroTipoLancamento = '';
-    if (!is_string($filtroTipoBanco) || !in_array($filtroTipoBanco, $tiposBancoFiltro, true)) $filtroTipoBanco = '';
+    $idsBancosPermitidos = array_column($bancosFiltroLancamento, 'id');
+    if ($filtroBancoId === false || $filtroBancoId < 0 || ($filtroBancoId > 0 && !in_array($filtroBancoId, $idsBancosPermitidos, true))) $filtroBancoId = 0;
   ?>
   <form method="get" action="lancamentos.php" class="transaction-filters">
     <div class="transaction-filters-heading">
@@ -35,13 +36,13 @@
         <label for="filter-transaction-type">Tipo de lançamento</label>
       </div>
       <div class="input-field">
-        <select name="tipo_banco" id="filter-bank-type">
-          <option value="" <?= $filtroTipoBanco === '' ? 'selected' : '' ?>>Todos os tipos de banco</option>
-          <?php foreach ($tiposBancoFiltro as $tipoBancoOpcao): ?>
-            <option value="<?= htmlspecialchars($tipoBancoOpcao, ENT_QUOTES, 'UTF-8') ?>" <?= $filtroTipoBanco === $tipoBancoOpcao ? 'selected' : '' ?>><?= htmlspecialchars($tipoBancoOpcao, ENT_QUOTES, 'UTF-8') ?></option>
+        <select name="banco_id" id="filter-bank-type">
+          <option value="0" <?= $filtroBancoId === 0 ? 'selected' : '' ?>>Todos os bancos</option>
+          <?php foreach ($bancosFiltroLancamento as $bancoOpcao): ?>
+            <option value="<?= $bancoOpcao['id'] ?>" <?= $filtroBancoId === $bancoOpcao['id'] ? 'selected' : '' ?>><?= htmlspecialchars($bancoOpcao['nome'], ENT_QUOTES, 'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
-        <label for="filter-bank-type">Tipo de banco</label>
+        <label for="filter-bank-type">Tipo do Banco</label>
       </div>
       <button class="btn" type="submit"><i class="material-icons left">filter_list</i>Filtrar</button>
     </div>
@@ -62,10 +63,10 @@
 
     <tbody>
     <?php 
-      $stmtLancamentosFiltrados = $conexao->prepare("SELECT f.*, b.nome AS banco_nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id WHERE (? = '' OR f.tipo = ?) AND (? = '' OR (b.tipo = ? AND b.usuario_id = ?)) ORDER BY f.id DESC");
+      $stmtLancamentosFiltrados = $conexao->prepare("SELECT f.*, b.nome AS banco_nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id AND b.usuario_id = f.usuario_id WHERE f.usuario_id = ? AND (? = '' OR f.tipo = ?) AND (? = 0 OR (b.id = ? AND b.usuario_id = ?)) ORDER BY f.id DESC");
       $resultado = false;
       if ($stmtLancamentosFiltrados) {
-        $stmtLancamentosFiltrados->bind_param('ssssi', $filtroTipoLancamento, $filtroTipoLancamento, $filtroTipoBanco, $filtroTipoBanco, $usuarioFiltroLancamento);
+        $stmtLancamentosFiltrados->bind_param('issiii', $usuarioFiltroLancamento, $filtroTipoLancamento, $filtroTipoLancamento, $filtroBancoId, $filtroBancoId, $usuarioFiltroLancamento);
         if ($stmtLancamentosFiltrados->execute()) $resultado = $stmtLancamentosFiltrados->get_result();
       }
       $row = $resultado ? mysqli_num_rows($resultado) : 0;

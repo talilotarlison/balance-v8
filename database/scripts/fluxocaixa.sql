@@ -6,10 +6,10 @@
 -- Tempo de geração: 15/04/2025 às 02:13
 -- Versão do servidor: 10.4.28-MariaDB
 -- Versão do PHP: 8.2.4
--- Pré-requisitos: o banco financeiro e as tabelas bancos e categorias devem existir.
+-- Pré-requisitos: o banco financeiro e as tabelas login, bancos e categorias devem existir.
 -- Execute bancos.sql e categorias.sql antes deste arquivo. Este dump cria fluxocaixa.
--- Para uma tabela fluxocaixa já existente, use lancamentos_campos.sql em vez deste dump.
--- Este arquivo já inclui os novos campos; não execute lancamentos_campos.sql depois dele.
+-- Para uma tabela existente, use lancamentos_campos.sql e lancamentos_usuario.sql.
+-- Este arquivo já inclui os novos campos; não execute essas migrações depois dele.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -43,12 +43,18 @@ CREATE TABLE `fluxocaixa` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 ALTER TABLE `fluxocaixa`
+  ADD COLUMN `usuario_id` INT(11) DEFAULT NULL AFTER `id`,
   ADD COLUMN `banco_id` INT(11) DEFAULT NULL AFTER `data`,
   ADD COLUMN `categoria_id` INT(11) DEFAULT NULL AFTER `banco_id`,
   ADD COLUMN `data_lancamento` DATE DEFAULT NULL AFTER `categoria_id`,
+  ADD KEY `idx_fluxocaixa_usuario_id` (`usuario_id`),
   ADD KEY `idx_fluxocaixa_banco` (`banco_id`),
   ADD KEY `idx_fluxocaixa_categoria` (`categoria_id`),
   ADD KEY `idx_fluxocaixa_data_lancamento` (`data_lancamento`),
+  ADD CONSTRAINT `fk_fluxocaixa_usuario`
+    FOREIGN KEY (`usuario_id`) REFERENCES `login` (`id`)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
   ADD CONSTRAINT `fk_fluxocaixa_banco`
     FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id`)
     ON UPDATE CASCADE
@@ -62,16 +68,16 @@ ALTER TABLE `fluxocaixa`
 -- Despejando dados para a tabela `fluxocaixa`
 --
 
-INSERT INTO `fluxocaixa` (`id`, `tipo`, `nome`, `preco`, `disc`, `data`, `banco_id`, `categoria_id`, `data_lancamento`) VALUES
-(149, 'Agendado', 'Talilo', 100, 'Gdgs', '19/05/2024 15:28:35', NULL, NULL, NULL),
-(150, 'Saida', 'Preco produto', -24, 'Rw', '2024-12-8 1:21:20.027', NULL, NULL, NULL),
-(175, 'Entrada', 'Pao', 2, 'Pao com ovo', '2024-12-8 1:21:20.027', NULL, NULL, NULL),
-(176, 'Agendado', 'Biscoito', 44, 'Biscode pacote branco', '2024-12-8 1:26:25.318', NULL, NULL, NULL),
-(199, 'Saida', 'Ssfs', -24, 'Ffs', '29/01/2025 00:29:10', NULL, NULL, NULL),
-(201, 'Agendado', 'Dfsdsf', 232313, 'Sfagdggfsf', '07/02/2025 17:12:41', NULL, NULL, NULL),
-(203, 'Entrada', 'Bobo', 32, 'Bolosa', '12/04/2025 15:02:08', NULL, NULL, NULL),
-(210, 'Agendado', 'Juju', 6, 'U', '14/04/2025 11:11:02', NULL, NULL, NULL),
-(214, 'Agendado', 'Ptyt', 5, 'G', '14/04/2025 16:39:18', NULL, NULL, NULL);
+INSERT INTO `fluxocaixa` (`id`, `usuario_id`, `tipo`, `nome`, `preco`, `disc`, `data`, `banco_id`, `categoria_id`, `data_lancamento`) VALUES
+(149, NULL, 'Agendado', 'Talilo', 100, 'Gdgs', '19/05/2024 15:28:35', NULL, NULL, NULL),
+(150, NULL, 'Saida', 'Preco produto', -24, 'Rw', '2024-12-8 1:21:20.027', NULL, NULL, NULL),
+(175, NULL, 'Entrada', 'Pao', 2, 'Pao com ovo', '2024-12-8 1:21:20.027', NULL, NULL, NULL),
+(176, NULL, 'Agendado', 'Biscoito', 44, 'Biscode pacote branco', '2024-12-8 1:26:25.318', NULL, NULL, NULL),
+(199, NULL, 'Saida', 'Ssfs', -24, 'Ffs', '29/01/2025 00:29:10', NULL, NULL, NULL),
+(201, NULL, 'Agendado', 'Dfsdsf', 232313, 'Sfagdggfsf', '07/02/2025 17:12:41', NULL, NULL, NULL),
+(203, NULL, 'Entrada', 'Bobo', 32, 'Bolosa', '12/04/2025 15:02:08', NULL, NULL, NULL),
+(210, NULL, 'Agendado', 'Juju', 6, 'U', '14/04/2025 11:11:02', NULL, NULL, NULL),
+(214, NULL, 'Agendado', 'Ptyt', 5, 'G', '14/04/2025 16:39:18', NULL, NULL, NULL);
 
 --
 -- Índices para tabelas despejadas

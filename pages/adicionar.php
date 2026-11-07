@@ -65,19 +65,15 @@ try {
         retornarComErroLancamento('O banco selecionado não pertence à sua conta.');
     }
 
-    if ($tipo === 'Entrada' || $tipo === 'Saida') {
-        if ($categoriaId === false || $categoriaId < 1) {
-            retornarComErroLancamento('Selecione uma categoria compatível com o tipo de lançamento.');
-        }
-        $stmtCategoria = $conexao->prepare('SELECT id FROM categorias WHERE id = ? AND usuario_id = ? AND tipo = ?');
-        $stmtCategoria->bind_param('iis', $categoriaId, $usuarioId, $tipo);
-        $stmtCategoria->execute();
-        $stmtCategoria->store_result();
-        if ($stmtCategoria->num_rows !== 1) {
-            retornarComErroLancamento('A categoria selecionada não corresponde ao tipo de lançamento.');
-        }
-    } else {
-        $categoriaId = null;
+    if ($categoriaId === false || $categoriaId < 1) {
+        retornarComErroLancamento('Selecione uma categoria compatível com o tipo de lançamento.');
+    }
+    $stmtCategoria = $conexao->prepare('SELECT id FROM categorias WHERE id = ? AND usuario_id = ? AND tipo = ?');
+    $stmtCategoria->bind_param('iis', $categoriaId, $usuarioId, $tipo);
+    $stmtCategoria->execute();
+    $stmtCategoria->store_result();
+    if ($stmtCategoria->num_rows !== 1) {
+        retornarComErroLancamento('A categoria selecionada não corresponde ao tipo de lançamento.');
     }
 
     $preco = (float) $valor;
@@ -88,15 +84,15 @@ try {
     $dataLancamentoSql = $dataValidada->format('Y-m-d');
     $nome = htmlspecialchars($nome, ENT_QUOTES, 'UTF-8');
     $descricao = htmlspecialchars($descricao, ENT_QUOTES, 'UTF-8');
-    $stmtInsert = $conexao->prepare('INSERT INTO fluxocaixa (tipo, nome, preco, disc, data, banco_id, categoria_id, data_lancamento) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-    $stmtInsert->bind_param('ssdssiis', $tipo, $nome, $preco, $descricao, $dataCriacao, $bancoId, $categoriaId, $dataLancamentoSql);
+    $stmtInsert = $conexao->prepare('INSERT INTO fluxocaixa (usuario_id, tipo, nome, preco, disc, data, banco_id, categoria_id, data_lancamento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmtInsert->bind_param('issdssiis', $usuarioId, $tipo, $nome, $preco, $descricao, $dataCriacao, $bancoId, $categoriaId, $dataLancamentoSql);
     $salvou = $stmtInsert->execute();
 } catch (Throwable $exception) {
     $salvou = false;
 }
 
 if (!$salvou) {
-    retornarComErroLancamento('Não foi possível salvar. Confirme se os scripts de bancos, categorias e lançamentos foram aplicados.');
+    retornarComErroLancamento('Não foi possível salvar. Confirme se os scripts de bancos, categorias, lançamentos e lancamentos_usuario.sql foram aplicados.');
 }
 
 $_SESSION['mensagem'] = 'Lançamento adicionado com sucesso.';

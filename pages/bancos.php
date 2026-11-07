@@ -22,7 +22,60 @@ if (empty($_SESSION['csrf_bancos'])) {
     $_SESSION['csrf_bancos'] = bin2hex(random_bytes(32));
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'excluir') {
+    $idBancoExcluir = filter_var($_POST['banco_id'] ?? null, FILTER_VALIDATE_INT);
+    $csrfExcluir = $_POST['csrf_token'] ?? '';
+    $erroExclusao = '';
+    $excluiuBanco = false;
+
+    if (!is_string($csrfExcluir) || !hash_equals($_SESSION['csrf_bancos'], $csrfExcluir)) {
+        $erroExclusao = 'A sessão expirou. Atualize a página e tente novamente.';
+    } elseif ($idBancoExcluir === false || $idBancoExcluir < 1) {
+        $erroExclusao = 'Banco inválido.';
+    } else {
+        try {
+            $conexao->begin_transaction();
+            $stmtBancoAlvo = $conexao->prepare('SELECT id FROM bancos WHERE id = ? AND usuario_id = ? FOR UPDATE');
+            $stmtBancoAlvo->bind_param('ii', $idBancoExcluir, $usuarioId);
+            $stmtBancoAlvo->execute();
+            $stmtBancoAlvo->store_result();
+            $bancoPertenceUsuario = $stmtBancoAlvo->num_rows === 1;
+            $stmtBancoAlvo->close();
+
+            if (!$bancoPertenceUsuario) {
+                $erroExclusao = 'Banco não encontrado na sua conta.';
+                $conexao->rollback();
+            } else {
+                $stmtUsoBanco = $conexao->prepare('SELECT id FROM fluxocaixa WHERE banco_id = ? AND usuario_id = ? LIMIT 1 FOR UPDATE');
+                $stmtUsoBanco->bind_param('ii', $idBancoExcluir, $usuarioId);
+                $stmtUsoBanco->execute();
+                $stmtUsoBanco->store_result();
+                $bancoEmUso = $stmtUsoBanco->num_rows > 0;
+                $stmtUsoBanco->close();
+
+                if ($bancoEmUso) {
+                    $erroExclusao = 'Este banco não pode ser excluído porque possui lançamentos associados.';
+                    $conexao->rollback();
+                } else {
+                    $stmtExcluirBanco = $conexao->prepare('DELETE FROM bancos WHERE id = ? AND usuario_id = ?');
+                    $stmtExcluirBanco->bind_param('ii', $idBancoExcluir, $usuarioId);
+                    $excluiuBanco = $stmtExcluirBanco->execute() && $stmtExcluirBanco->affected_rows === 1;
+                    $stmtExcluirBanco->close();
+                    if ($excluiuBanco) $conexao->commit();
+                    else $conexao->rollback();
+                }
+            }
+        } catch (Throwable $exception) {
+            try { $conexao->rollback(); } catch (Throwable $ignorado) {}
+            $erroExclusao = 'Não foi possível excluir o banco. Tente novamente.';
+        }
+    }
+
+    if ($excluiuBanco) $_SESSION['mensagem'] = 'Banco excluído com sucesso.';
+    elseif ($erroExclusao !== '') $_SESSION['mensagemErro'] = $erroExclusao;
+    header('Location: bancos.php');
+    exit;
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['nome'] = trim($_POST['nome'] ?? '');
     $form['tipo'] = trim($_POST['tipo'] ?? '');
     $form['cor'] = trim($_POST['cor'] ?? '');
@@ -106,7 +159,7 @@ function textoBancoSobreCor($hex) {
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20261107-16">
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20261107-22">
   <title>Balance - Bancos</title>
 </head>
 <body class="<?= (int) ($_SESSION['temaUser'] ?? 0) === 1 ? 'theme-dark' : 'theme-light' ?>">
@@ -125,6 +178,10 @@ function textoBancoSobreCor($hex) {
       <?php if (!empty($_SESSION['mensagem'])): ?>
         <p class="bank-feedback bank-feedback-success" role="status"><?= escaparBanco($_SESSION['mensagem']) ?></p>
         <?php unset($_SESSION['mensagem']); ?>
+      <?php endif; ?>
+      <?php if (!empty($_SESSION['mensagemErro'])): ?>
+        <p class="bank-feedback bank-feedback-error" role="alert"><?= escaparBanco($_SESSION['mensagemErro']) ?></p>
+        <?php unset($_SESSION['mensagemErro']); ?>
       <?php endif; ?>
 
       <form method="post" action="bancos.php">
@@ -170,6 +227,14 @@ function textoBancoSobreCor($hex) {
               <h4><?= escaparBanco($banco['nome']) ?></h4>
               <?php if (!empty($banco['descricao'])): ?><p class="bank-card-description"><?= nl2br(escaparBanco($banco['descricao'])) ?></p><?php endif; ?>
               <div class="bank-card-date"><i class="material-icons" aria-hidden="true">event</i>Criado em <?= escaparBanco(date('d/m/Y', strtotime($banco['criado_em']))) ?></div>
+              <div class="bank-card-actions">
+                <form method="post" action="bancos.php" onsubmit="return confirm('Excluir este banco? Essa ação não pode ser desfeita.');">
+                  <input type="hidden" name="csrf_token" value="<?= escaparBanco($_SESSION['csrf_bancos']) ?>">
+                  <input type="hidden" name="acao" value="excluir">
+                  <input type="hidden" name="banco_id" value="<?= (int) $banco['id'] ?>">
+                  <button class="btn btn-danger bank-card-delete waves-effect waves-light" type="submit" aria-label="Excluir banco <?= escaparBanco($banco['nome']) ?>" title="Excluir banco"><i class="material-icons" aria-hidden="true">delete</i></button>
+                </form>
+              </div>
             </article>
           <?php endforeach; ?>
         </div>

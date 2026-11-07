@@ -6,11 +6,12 @@ $bancosFormulario = [];
 $categoriasFormulario = [];
 $idItemSolicitado = filter_var($_GET['id'] ?? $_GET['view'] ?? null, FILTER_VALIDATE_INT);
 $ehVisualizacao = isset($_GET['view']);
+$usuarioLancamentoId = (int) ($_SESSION['idUser'] ?? 0);
 
-if ($idItemSolicitado !== false && $idItemSolicitado !== null && $idItemSolicitado > 0) {
+if ($idItemSolicitado !== false && $idItemSolicitado !== null && $idItemSolicitado > 0 && $usuarioLancamentoId > 0) {
     try {
-        $stmtItem = $conexao->prepare('SELECT f.tipo, f.nome, f.preco, f.disc, f.data_lancamento, f.banco_id, f.categoria_id, f.data, b.nome, c.nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id LEFT JOIN categorias c ON c.id = f.categoria_id WHERE f.id = ?');
-        $stmtItem->bind_param('i', $idItemSolicitado);
+        $stmtItem = $conexao->prepare('SELECT f.tipo, f.nome, f.preco, f.disc, f.data_lancamento, f.banco_id, f.categoria_id, f.data, b.nome, c.nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id AND b.usuario_id = f.usuario_id LEFT JOIN categorias c ON c.id = f.categoria_id AND c.usuario_id = f.usuario_id WHERE f.id = ? AND f.usuario_id = ?');
+        $stmtItem->bind_param('ii', $idItemSolicitado, $usuarioLancamentoId);
         $stmtItem->execute();
         $stmtItem->store_result();
         $stmtItem->bind_result($itemTipo, $itemNome, $itemPreco, $itemDescricao, $itemDataLancamento, $itemBancoId, $itemCategoriaId, $itemDataCriacao, $itemBancoNome, $itemCategoriaNome);
@@ -18,18 +19,7 @@ if ($idItemSolicitado !== false && $idItemSolicitado !== null && $idItemSolicita
             $arrItem = [0 => $itemTipo, 1 => $itemNome, 2 => $itemPreco, 3 => $itemDescricao, 4 => $itemDataLancamento, 5 => $itemBancoId, 6 => $itemCategoriaId, 7 => $itemBancoNome, 8 => $itemCategoriaNome, 9 => $itemDataCriacao];
         }
     } catch (Throwable $exception) {
-        try {
-            $stmtItemBasico = $conexao->prepare('SELECT tipo, nome, preco, disc, data FROM fluxocaixa WHERE id = ?');
-            $stmtItemBasico->bind_param('i', $idItemSolicitado);
-            $stmtItemBasico->execute();
-            $stmtItemBasico->store_result();
-            $stmtItemBasico->bind_result($itemTipo, $itemNome, $itemPreco, $itemDescricao, $itemDataCriacao);
-            if ($stmtItemBasico->fetch()) {
-                $arrItem = [0 => $itemTipo, 1 => $itemNome, 2 => $itemPreco, 3 => $itemDescricao, 4 => null, 5 => null, 6 => null, 7 => null, 8 => null, 9 => $itemDataCriacao];
-            }
-        } catch (Throwable $ignored) {
-            $arrItem = [];
-        }
+        $arrItem = [];
     }
 
     if (!$ehVisualizacao && isset($_SESSION['idUser'])) {

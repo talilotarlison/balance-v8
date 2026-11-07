@@ -16,7 +16,8 @@
             $saldoInicialEntrada = 0;
             $arrEntrada = array();
             $buscarDadosEntrada = new SelectAll();
-            $query = $buscarDadosEntrada -> selectDadosAll();
+            $usuarioDashboardConsultaId = (int) ($_SESSION['idUser'] ?? 0);
+            $query = $buscarDadosEntrada -> selectDadosAll($usuarioDashboardConsultaId);
             $resultado = mysqli_query($conexao, $query);
             $row =  mysqli_num_rows($resultado);
 
@@ -55,7 +56,7 @@
             $saldoInicialAgendados = 0;
             $arrAgenda = array();
             $buscarDadosAgendados = new selectTipo( null, "Agendado");
-            $query = $buscarDadosAgendados -> selectDadosTipo();
+            $query = $buscarDadosAgendados -> selectDadosTipo($usuarioDashboardConsultaId);
             $resultado = mysqli_query($conexao, $query);
             $row =  mysqli_num_rows($resultado);
 
@@ -93,7 +94,7 @@
             $saldoInicialSaidas = 0;
             $arrSaida = array();
             $buscarDadosSaida = new SelectAll();
-            $query = $buscarDadosSaida -> selectDadosAll();
+            $query = $buscarDadosSaida -> selectDadosAll($usuarioDashboardConsultaId);
             $resultado = mysqli_query($conexao, $query);
             $row =  mysqli_num_rows($resultado);
 
@@ -131,7 +132,7 @@
           <?php
             $saldo_total = 0.0;
             $usuarioSaldoId = (int) ($_SESSION['idUser'] ?? 0);
-            $stmtSaldoBancos = $conexao->prepare("SELECT COALESCE(SUM(CASE WHEN f.tipo = 'Entrada' THEN ABS(f.preco) WHEN f.tipo = 'Saida' THEN -ABS(f.preco) ELSE 0 END), 0) FROM bancos b LEFT JOIN fluxocaixa f ON f.banco_id = b.id WHERE b.usuario_id = ?");
+            $stmtSaldoBancos = $conexao->prepare("SELECT COALESCE(SUM(CASE WHEN f.tipo = 'Entrada' THEN ABS(f.preco) WHEN f.tipo = 'Saida' THEN -ABS(f.preco) ELSE 0 END), 0) FROM bancos b LEFT JOIN fluxocaixa f ON f.banco_id = b.id AND f.usuario_id = b.usuario_id WHERE b.usuario_id = ?");
             if ($stmtSaldoBancos) {
               $stmtSaldoBancos->bind_param('i', $usuarioSaldoId);
               if ($stmtSaldoBancos->execute()) {

@@ -4,7 +4,7 @@ $bancosDashboard = [];
 $categoriasDashboard = [];
 $saldoConsolidadoDashboard = 0.0;
 
-$stmtBancosDashboard = $conexao->prepare("SELECT b.id, b.nome, b.cor, COALESCE(SUM(CASE WHEN f.tipo = 'Entrada' THEN ABS(f.preco) WHEN f.tipo = 'Saida' THEN -ABS(f.preco) ELSE 0 END), 0) AS saldo FROM bancos b LEFT JOIN fluxocaixa f ON f.banco_id = b.id WHERE b.usuario_id = ? GROUP BY b.id, b.nome, b.cor ORDER BY b.nome");
+$stmtBancosDashboard = $conexao->prepare("SELECT b.id, b.nome, b.cor, COALESCE(SUM(CASE WHEN f.tipo = 'Entrada' THEN ABS(f.preco) WHEN f.tipo = 'Saida' THEN -ABS(f.preco) ELSE 0 END), 0) AS saldo FROM bancos b LEFT JOIN fluxocaixa f ON f.banco_id = b.id AND f.usuario_id = b.usuario_id WHERE b.usuario_id = ? GROUP BY b.id, b.nome, b.cor ORDER BY b.nome");
 if ($stmtBancosDashboard) {
   $stmtBancosDashboard->bind_param('i', $usuarioDashboardId);
   if ($stmtBancosDashboard->execute()) {
@@ -42,7 +42,7 @@ if ($stmtCategoriasDashboard) {
   <div class="recent-transactions-list">
     <?php
       $consultaRecentes = new SelectAll();
-      $resultadoRecentes = mysqli_query($conexao, $consultaRecentes->selectUltimosCinco());
+      $resultadoRecentes = mysqli_query($conexao, $consultaRecentes->selectUltimosCinco($usuarioDashboardId));
       $totalRecentes = $resultadoRecentes ? mysqli_num_rows($resultadoRecentes) : 0;
 
       if ($totalRecentes === 0) {
@@ -120,9 +120,9 @@ if ($stmtCategoriasDashboard) {
       <?php foreach ($categoriasDashboard as $categoriaDashboard): ?>
         <?php
           $lancamentosCategoriaDashboard = [];
-          $stmtLancamentosCategoria = $conexao->prepare('SELECT f.tipo, f.nome, f.preco, f.data, f.data_lancamento, b.nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id WHERE f.categoria_id = ? AND (f.banco_id IS NULL OR b.usuario_id = ?) ORDER BY f.id DESC LIMIT 6');
+          $stmtLancamentosCategoria = $conexao->prepare('SELECT f.tipo, f.nome, f.preco, f.data, f.data_lancamento, b.nome FROM fluxocaixa f LEFT JOIN bancos b ON b.id = f.banco_id AND b.usuario_id = f.usuario_id WHERE f.usuario_id = ? AND f.categoria_id = ? AND (f.banco_id IS NULL OR b.usuario_id = ?) ORDER BY f.id DESC LIMIT 6');
           if ($stmtLancamentosCategoria) {
-            $stmtLancamentosCategoria->bind_param('ii', $categoriaDashboard['id'], $usuarioDashboardId);
+            $stmtLancamentosCategoria->bind_param('iii', $usuarioDashboardId, $categoriaDashboard['id'], $usuarioDashboardId);
             if ($stmtLancamentosCategoria->execute()) {
               $stmtLancamentosCategoria->bind_result($tipoLancamentoCategoria, $nomeLancamentoCategoria, $precoLancamentoCategoria, $dataCriacaoCategoria, $dataLancamentoCategoria, $nomeBancoCategoria);
               while ($stmtLancamentosCategoria->fetch()) {
@@ -131,13 +131,15 @@ if ($stmtCategoriasDashboard) {
             }
             $stmtLancamentosCategoria->close();
           }
-          $classeCategoriaDashboard = $categoriaDashboard['tipo'] === 'Entrada' ? 'income' : 'expense';
-          $corCategoriaCss = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $categoriaDashboard['cor']) ? $categoriaDashboard['cor'] : ($classeCategoriaDashboard === 'income' ? '#138a60' : '#d64f5d');
+          $classeCategoriaDashboard = $categoriaDashboard['tipo'] === 'Entrada' ? 'income' : ($categoriaDashboard['tipo'] === 'Saida' ? 'expense' : 'scheduled');
+          $corCategoriaFallback = $classeCategoriaDashboard === 'income' ? '#138a60' : ($classeCategoriaDashboard === 'expense' ? '#d64f5d' : '#e8b84f');
+          $corCategoriaCss = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $categoriaDashboard['cor']) ? $categoriaDashboard['cor'] : $corCategoriaFallback;
+          $rotuloTipoCategoriaDashboard = $categoriaDashboard['tipo'] === 'Entrada' ? 'Entrada' : ($categoriaDashboard['tipo'] === 'Saida' ? 'Saída' : 'Agendado');
         ?>
         <article class="category-recent-card <?= $classeCategoriaDashboard ?>" style="--category-accent: <?= htmlspecialchars($corCategoriaCss, ENT_QUOTES, 'UTF-8') ?>">
           <header>
             <span class="category-recent-dot" aria-hidden="true"></span>
-            <div><h4><?= htmlspecialchars($categoriaDashboard['nome'], ENT_QUOTES, 'UTF-8') ?></h4><small><?= $categoriaDashboard['tipo'] === 'Entrada' ? 'Entrada' : 'Saída' ?></small></div>
+            <div><h4><?= htmlspecialchars($categoriaDashboard['nome'], ENT_QUOTES, 'UTF-8') ?></h4><small><?= $rotuloTipoCategoriaDashboard ?></small></div>
             <span class="category-recent-count"><?= count($lancamentosCategoriaDashboard) ?>/6</span>
           </header>
           <?php if (!$lancamentosCategoriaDashboard): ?>

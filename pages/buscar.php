@@ -1,15 +1,11 @@
 <?php
-  // Incluir arquivos
-  include('../database/conexao.php');
-  include_once('../database/model/classBuscar.php'); 
-  // sessao de usuario 
   session_start();
-  
-  if (!isset($_SESSION['usuario'])) {
-    header('Location: index.php');
-  } 
-
-  include('../database/model/classSelect.php'); 
+  if (empty($_SESSION['idUser'])) {
+    header('Location: ../index.php');
+    exit;
+  }
+  include('../database/conexao.php');
+  include('../database/model/classSelect.php');
 ?>
 
 <!DOCTYPE html>
@@ -78,12 +74,13 @@
 
         <tbody>
         <?php 
-          $busca = $_POST["busca"] ?? " ";
-          $buscaVerificada = mysqli_real_escape_string($conexao, trim($busca)); 
-          $buscarDados = new Buscar($buscaVerificada);
-          $query = $buscarDados->buscarPorDadosDesc();
-          $resultadoBusca = mysqli_query($conexao, $query);
-          $row = mysqli_num_rows($resultadoBusca);
+          $busca = trim((string) ($_POST['busca'] ?? ''));
+          $usuarioBuscaId = (int) $_SESSION['idUser'];
+          $stmtBusca = $conexao->prepare("SELECT f.* FROM fluxocaixa f WHERE f.usuario_id = ? AND f.nome LIKE CONCAT('%', ?, '%') ORDER BY f.id DESC");
+          $stmtBusca->bind_param('is', $usuarioBuscaId, $busca);
+          $stmtBusca->execute();
+          $resultadoBusca = $stmtBusca->get_result();
+          $row = $resultadoBusca ? mysqli_num_rows($resultadoBusca) : 0;
 
           if ($row === 0) {
         ?>
@@ -104,9 +101,9 @@
                   }
                 ?>
               </td>
-              <td><?= substr($linha['nome'], 0, 20) . "..." ?></td>
+              <td><?= htmlspecialchars(mb_strimwidth((string) $linha['nome'], 0, 23, '…'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>R$ <?= number_format($linha['preco'], 2, ',', ' ') ?></td>
-              <td><?= substr($linha['disc'], 0, 20) . "..." ?></td>
+              <td><?= htmlspecialchars(mb_strimwidth((string) $linha['disc'], 0, 23, '…'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><?= !empty($linha['data_lancamento']) ? date('d/m/Y', strtotime($linha['data_lancamento'])) : htmlspecialchars((string) $linha['data'], ENT_QUOTES, 'UTF-8') ?></td>
               <td>
                 <a href="#modal<?= $linha['id'] ?>" class="waves-effect btn btn-danger modal-trigger">
@@ -124,7 +121,7 @@
             <!-- Modal de exclusão -->
             <div id="modal<?= $linha['id'] ?>" class="modal">
               <div class="modal-content">
-                <h4>Excluir item: <?= $linha['nome'] ?></h4>
+                <h4>Excluir item: <?= htmlspecialchars((string) $linha['nome'], ENT_QUOTES, 'UTF-8') ?></h4>
                 <p>Tem certeza que quer excluir?</p>
               </div>
               <div class="modal-footer">

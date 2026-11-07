@@ -1,5 +1,22 @@
 # Changelog — Balance
 
+## 2026-11-07 — Exclusão segura de bancos e categorias
+
+- Adicionados botões de exclusão nos cartões de bancos e categorias, com confirmação antes do envio.
+- Os botões agora exibem somente o ícone da lixeira; nomes acessíveis permanecem nos atributos `aria-label` e `title`.
+- As operações usam POST e token CSRF, verificam que o item pertence ao usuário e executam em transação.
+- A exclusão é bloqueada quando existe lançamento associado; a página informa o motivo e preserva o registro.
+- Atualizados os estilos das ações nos cartões e a versão de cache do CSS das páginas.
+- Não foram executados testes.
+
+## 2026-11-07 — Categorias para lançamentos agendados
+
+- Adicionado o tipo `Agendado` ao cadastro e à listagem de categorias, com cor âmbar e ícone de calendário.
+- Formulários de inclusão e edição filtram e exigem categoria correspondente também para lançamentos agendados; o servidor valida tipo, usuário e categoria.
+- Dashboard identifica categorias agendadas junto às categorias de entradas e saídas.
+- Atualizado o script de criação de categorias e criado `database/scripts/categorias_agendado.sql` para atualizar tabelas existentes e recuperar tipos vazios gerados por tentativas anteriores em modo SQL não estrito. O script não foi executado.
+- O formulário verifica se a coluna `tipo` aceita `Agendado` e orienta a aplicar a migração antes de salvar, evitando novas categorias com tipo vazio.
+
 ## 2026-11-07 — Atualização do README
 
 - Mantidas as seções originais de funcionalidades, requisitos, instalação, estrutura, uso, contribuição e licença, atualizando-as para o ambiente real PHP + MySQL/MariaDB.

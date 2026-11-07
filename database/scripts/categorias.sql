@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `categorias` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `usuario_id` INT(11) NOT NULL,
   `nome` VARCHAR(120) NOT NULL,
-  `tipo` ENUM('Entrada', 'Saida') NOT NULL,
+  `tipo` ENUM('Entrada', 'Saida', 'Agendado') NOT NULL,
   `cor` CHAR(7) NOT NULL,
   `criado_em` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

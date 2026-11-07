@@ -11,10 +11,12 @@ O Balance é um sistema de gerenciamento de finanças pessoais desenvolvido em P
 - Listagem de transações e busca textual.
 - Filtros combináveis por tipo de lançamento e tipo de banco.
 - Cadastro de bancos/carteiras com tipo, cor, descrição e data de criação.
-- Cadastro de categorias de entrada e saída, com cores padronizadas.
+- Cadastro de categorias de entrada, saída e lançamentos agendados, com cores padronizadas.
+- Cadastro de lembretes com data prevista, email/telefone/URL opcionais e marcação de conclusão.
 - Dashboard com totais, gráfico, calendário, lançamentos recentes, saldos por banco e lançamentos recentes por categoria.
 - Tema claro e escuro com preferência salva no perfil.
 - Interface responsiva baseada em Materialize.
+- Lembrete para organizar tarefas.
 
 ## Tecnologias
 
@@ -55,8 +57,16 @@ As versões e extensões declaradas no `composer.json` são requisitos de depend
    2. `database/scripts/bancos.sql` — cria a tabela de bancos, vinculada a `login`.
    3. `database/scripts/categorias.sql` — cria a tabela de categorias, vinculada a `login`.
    4. `database/scripts/lancamentos_campos.sql` — adiciona banco, categoria e data do lançamento à tabela existente `fluxocaixa`.
+   5. `database/scripts/lancamentos_usuario.sql` — adiciona o proprietário a cada lançamento para separar os dados por conta.
+   6. `database/scripts/lembretes.sql` — migra a tabela legada `links` para armazenar lembretes associados ao usuário.
 
-   Os dumps podem conter dados de exemplo. Em uma base que já tenha dados, faça e verifique um backup antes da migração. O script `lancamentos_campos.sql` deve ser executado uma única vez e somente se as colunas e chaves ainda não existirem. Não aplique essa migração após importar `database/scripts/fluxocaixa.sql`, pois esse dump já inclui os campos adicionais.
+   Se a tabela `categorias` já existia antes da inclusão de categorias agendadas, execute também `database/scripts/categorias_agendado.sql` uma única vez para atualizar o ENUM. Em bancos novos, `categorias.sql` já aceita os três tipos.
+
+   A migração de lembretes mantém linhas antigas com `usuario_id` nulo; elas não aparecem na conta de ninguém até que o proprietário seja confirmado e associado manualmente.
+
+   A migração de lançamentos também mantém `usuario_id` nulo nas linhas antigas. Elas ficam ocultas das contas até que a titularidade seja confirmada e associada manualmente; não atribua dados antigos em massa sem validação.
+
+   Os dumps podem conter dados de exemplo. Em uma base que já tenha dados, faça e verifique um backup antes da migração. Os scripts `lancamentos_campos.sql` e `lancamentos_usuario.sql` devem ser executados uma única vez e somente se as colunas e chaves ainda não existirem. Não aplique essas migrações após importar `database/scripts/fluxocaixa.sql`, pois esse dump já inclui os campos adicionais.
 
 7. Acesse o projeto pelo navegador, por exemplo `http://localhost/balance-v8/`, e crie uma conta pela página de cadastro.
 
@@ -66,7 +76,7 @@ As versões e extensões declaradas no `composer.json` são requisitos de depend
 
 - `index.php`: tela de login.
 - `loginActions.php`, `cadastro.php`, `cadrastroActions.php`: processamento de login e cadastro.
-- `pages/`: páginas autenticadas do dashboard, lançamentos, bancos, categorias e busca, além de endpoints de inclusão, edição, exclusão e tema.
+- `pages/`: páginas autenticadas do dashboard, lançamentos, bancos, categorias, lembretes e busca, além de endpoints de inclusão, edição, exclusão e tema.
 - `pages/views/`: componentes de apresentação usados nas páginas, como cabeçalho, tabela, dashboard e formulários.
 - `database/conexao.php`: conexão com o banco via `mysqli`.
 - `database/model/`: carregamento de ambiente e classes de acesso/consulta legadas.
@@ -97,7 +107,7 @@ As versões e extensões declaradas no `composer.json` são requisitos de depend
 ## Segurança e limitações conhecidas
 
 - Use apenas credenciais locais/de desenvolvimento neste setup de exemplo e mantenha `.env` fora do controle de versão.
-- Os registros legados de `fluxocaixa` não possuem coluna `usuario_id`; isso limita o isolamento completo das transações por usuário. Consulte `docs/DIAGNOSTICO.md` antes de expor a aplicação em produção.
+- Em instalações existentes, aplique `lancamentos_usuario.sql` antes de usar o código atualizado. Registros legados sem proprietário permanecem ocultos até associação manual validada. Consulte `docs/DATABASE.MD` para a migração.
 - O esquema contém `preco FLOAT` e uma coluna legada de data textual; há riscos de precisão monetária e formatos de data. Não altere o esquema sem backup e plano de migração.
 - A configuração de segurança e autorização deve ser revisada antes de disponibilizar o sistema na internet.
 

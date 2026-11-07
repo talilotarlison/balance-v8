@@ -2,18 +2,18 @@
 
   class SelectAll{
 
-    public function selectDadosAll() {
-      $query = "SELECT * FROM fluxocaixa";
+    public function selectDadosAll($usuarioId) {
+      $query = "SELECT * FROM fluxocaixa WHERE usuario_id=" . (int) $usuarioId;
       return $query;
     }
 
-    public function selectDadosDesc() {
-      $query = "SELECT * FROM fluxocaixa ORDER BY id DESC";
+    public function selectDadosDesc($usuarioId) {
+      $query = "SELECT * FROM fluxocaixa WHERE usuario_id=" . (int) $usuarioId . " ORDER BY id DESC";
       return $query;
     }
 
-    public function selectUltimosCinco() {
-      $query = "SELECT id, tipo, nome, preco, disc, data FROM fluxocaixa ORDER BY id DESC LIMIT 5";
+    public function selectUltimosCinco($usuarioId) {
+      $query = "SELECT id, tipo, nome, preco, disc, data FROM fluxocaixa WHERE usuario_id=" . (int) $usuarioId . " ORDER BY id DESC LIMIT 5";
       return $query;
     }
 
@@ -34,8 +34,8 @@
       return $this -> tipo = $tipo;
     }
     
-    public function selectDadosId() {
-      $query = "SELECT * FROM fluxocaixa where id=".$this->id;
+    public function selectDadosId($usuarioId) {
+      $query = "SELECT * FROM fluxocaixa WHERE id=" . (int) $this->id . " AND usuario_id=" . (int) $usuarioId;
       return $query;
     }
   }
@@ -55,8 +55,9 @@
       return $this -> tipo = $tipo;
     }
 
-    public function selectDadosTipo() {
-      $query = "SELECT * FROM fluxocaixa where tipo='".$this->tipo."'";
+    public function selectDadosTipo($usuarioId) {
+      $tipoSeguro = addslashes($this->tipo);
+      $query = "SELECT * FROM fluxocaixa WHERE usuario_id=" . (int) $usuarioId . " AND tipo='" . $tipoSeguro . "'";
       return $query;
     }
 

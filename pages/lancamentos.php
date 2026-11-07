@@ -2,8 +2,9 @@
   # sessao do usuario
   session_start();
   
-  if (!isset($_SESSION['usuario'])) {
+  if (!isset($_SESSION['usuario']) || empty($_SESSION['idUser'])) {
     header('Location: index.php');
+    exit;
   } 
 
   #Conexão com o banco de dados
@@ -22,7 +23,7 @@
   <meta name="theme-color" content="#246bfe">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <title>Balance - Lançamentos</title>
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20261107-19">
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20261107-20">
 </head>
 
 <body class="<?= (int) ($_SESSION['temaUser'] ?? 0) === 1 ? 'theme-dark' : 'theme-light' ?>">

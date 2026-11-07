@@ -66,19 +66,15 @@ try {
         retornarEdicaoLancamento('O banco selecionado não pertence à sua conta.');
     }
 
-    if ($tipo === 'Entrada' || $tipo === 'Saida') {
-        if ($categoriaId === false || $categoriaId < 1) {
-            retornarEdicaoLancamento('Selecione uma categoria compatível com o tipo de lançamento.');
-        }
-        $stmtCategoria = $conexao->prepare('SELECT id FROM categorias WHERE id = ? AND usuario_id = ? AND tipo = ?');
-        $stmtCategoria->bind_param('iis', $categoriaId, $usuarioId, $tipo);
-        $stmtCategoria->execute();
-        $stmtCategoria->store_result();
-        if ($stmtCategoria->num_rows !== 1) {
-            retornarEdicaoLancamento('A categoria selecionada não corresponde ao tipo de lançamento.');
-        }
-    } else {
-        $categoriaId = null;
+    if ($categoriaId === false || $categoriaId < 1) {
+        retornarEdicaoLancamento('Selecione uma categoria compatível com o tipo de lançamento.');
+    }
+    $stmtCategoria = $conexao->prepare('SELECT id FROM categorias WHERE id = ? AND usuario_id = ? AND tipo = ?');
+    $stmtCategoria->bind_param('iis', $categoriaId, $usuarioId, $tipo);
+    $stmtCategoria->execute();
+    $stmtCategoria->store_result();
+    if ($stmtCategoria->num_rows !== 1) {
+        retornarEdicaoLancamento('A categoria selecionada não corresponde ao tipo de lançamento.');
     }
 
     $preco = (float) $valor;
@@ -88,8 +84,8 @@ try {
     $nome = htmlspecialchars($nome, ENT_QUOTES, 'UTF-8');
     $descricao = htmlspecialchars($descricao, ENT_QUOTES, 'UTF-8');
     $dataLancamentoSql = $dataValidada->format('Y-m-d');
-    $stmtUpdate = $conexao->prepare('UPDATE fluxocaixa SET tipo = ?, nome = ?, preco = ?, disc = ?, banco_id = ?, categoria_id = ?, data_lancamento = ? WHERE id = ?');
-    $stmtUpdate->bind_param('ssdsiisi', $tipo, $nome, $preco, $descricao, $bancoId, $categoriaId, $dataLancamentoSql, $id);
+    $stmtUpdate = $conexao->prepare('UPDATE fluxocaixa SET tipo = ?, nome = ?, preco = ?, disc = ?, banco_id = ?, categoria_id = ?, data_lancamento = ? WHERE id = ? AND usuario_id = ?');
+    $stmtUpdate->bind_param('ssdsiisii', $tipo, $nome, $preco, $descricao, $bancoId, $categoriaId, $dataLancamentoSql, $id, $usuarioId);
     $salvou = $stmtUpdate->execute();
 } catch (Throwable $exception) {
     $salvou = false;
@@ -97,7 +93,7 @@ try {
 
 $_SESSION['mensagem'] = $salvou
     ? 'Lançamento atualizado com sucesso.'
-    : 'Não foi possível atualizar. Confirme se os scripts de bancos, categorias e lançamentos foram aplicados.';
+    : 'Não foi possível atualizar. Confirme se os scripts de bancos, categorias, lançamentos e lancamentos_usuario.sql foram aplicados.';
 header('Location: lancamentos.php');
 exit;
 ?>

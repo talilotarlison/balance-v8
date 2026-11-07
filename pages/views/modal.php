@@ -57,7 +57,7 @@
 					<div class="col s12 m8 profile-details">
 						<p><strong>Nome:</strong> <?= ucwords($_SESSION['usuario']);?></p>
 						<p><strong>Email:</strong> <?= $_SESSION['email'];?></p>
-						<p><strong>Ultimo Login:</strong> <?= (new DateTime('America/Sao_Paulo'))->format('d/m/Y H:i:s');?></p>
+						<p><strong>Ultimo Login:</strong> <?= !empty($_SESSION['ultimoLogin']) ? (new DateTime($_SESSION['ultimoLogin'], new DateTimeZone('America/Fortaleza')))->format('d/m/Y H:i:s') : 'Não disponível';?></p>
 						<p><strong>Status:</strong> <span class="green white-text" style="padding: 2px 10px; border-radius: 15px; font-size: 0.9rem; font-weight: 500;">Ativo</span></p>
 					</div>
 				</div>
@@ -130,7 +130,7 @@
 				  <select id="item_category" name="categoria_id" required <?= count($categoriasFormulario) === 0 ? 'disabled' : '' ?>>
 					<option value="" disabled selected><?= count($categoriasFormulario) === 0 ? 'Cadastre uma categoria primeiro' : 'Selecione a categoria' ?></option>
 					<?php foreach ($categoriasFormulario as $categoriaFormulario): ?>
-					  <option value="<?= (int) $categoriaFormulario['id'] ?>" data-tipo="<?= htmlspecialchars($categoriaFormulario['tipo'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($categoriaFormulario['nome'] . ' — ' . ($categoriaFormulario['tipo'] === 'Entrada' ? 'Entrada' : 'Saída'), ENT_QUOTES, 'UTF-8') ?></option>
+					  <option value="<?= (int) $categoriaFormulario['id'] ?>" data-tipo="<?= htmlspecialchars($categoriaFormulario['tipo'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($categoriaFormulario['nome'] . ' — ' . ($categoriaFormulario['tipo'] === 'Entrada' ? 'Entrada' : ($categoriaFormulario['tipo'] === 'Saida' ? 'Saída' : 'Agendado')), ENT_QUOTES, 'UTF-8') ?></option>
 					<?php endforeach; ?>
 				  </select>
 				  <label for="item_category">Categoria</label>
@@ -174,7 +174,7 @@
 		var ajudaCategoria = document.getElementById('item-category-help');
 		function atualizarCategorias() {
 		  var tipoSelecionado = document.querySelector('#modal-add input[name="tipo"]:checked').value;
-		  var tipoCategoria = tipoSelecionado === 'Saida' ? 'Saida' : tipoSelecionado;
+		  var tipoCategoria = tipoSelecionado;
 		  var instancia = M.FormSelect.getInstance(categoriaSelect);
 		  if (instancia) instancia.destroy();
 		  categoriaSelect.innerHTML = '';
@@ -183,29 +183,23 @@
 		  placeholder.disabled = true;
 		  placeholder.selected = true;
 		  categoriaSelect.appendChild(placeholder);
-		  if (tipoSelecionado === 'Agendado') {
-			placeholder.textContent = 'Categoria opcional para agendados';
-			categoriaSelect.required = false;
-			categoriaSelect.disabled = false;
-			ajudaCategoria.textContent = 'A categoria não é obrigatória para lançamentos agendados.';
-		  } else {
-			placeholder.textContent = 'Selecione a categoria';
-			categoriaSelect.required = true;
-			var categoriasDisponiveis = 0;
-			todasCategorias.forEach(function (option) {
-			  if (option.dataset.tipo === tipoCategoria) {
-				categoriaSelect.appendChild(option.cloneNode(true));
-				categoriasDisponiveis++;
-			  }
-			});
-			categoriaSelect.disabled = categoriasDisponiveis === 0;
-			if (categoriasDisponiveis === 0) {
-			  placeholder.textContent = 'Nenhuma categoria deste tipo';
-			  ajudaCategoria.innerHTML = 'Cadastre uma categoria de ' + (tipoCategoria === 'Entrada' ? 'entrada' : 'saída') + ' em <a href="categorias.php">Categorias</a>.';
-			} else {
-			  ajudaCategoria.textContent = '';
+		  placeholder.textContent = 'Selecione a categoria';
+		  categoriaSelect.required = true;
+		  var categoriasDisponiveis = 0;
+		  todasCategorias.forEach(function (option) {
+			if (option.dataset.tipo === tipoCategoria) {
+			  categoriaSelect.appendChild(option.cloneNode(true));
+			  categoriasDisponiveis++;
 			}
-		}
+		  });
+		  categoriaSelect.disabled = categoriasDisponiveis === 0;
+		  if (categoriasDisponiveis === 0) {
+			placeholder.textContent = 'Nenhuma categoria deste tipo';
+			var tipoCategoriaLabel = tipoCategoria === 'Entrada' ? 'entrada' : (tipoCategoria === 'Saida' ? 'saída' : 'agendada');
+			ajudaCategoria.innerHTML = 'Cadastre uma categoria ' + tipoCategoriaLabel + ' em <a href="categorias.php">Categorias</a>.';
+		  } else {
+			ajudaCategoria.textContent = '';
+		  }
 		  if (!categoriaSelect.disabled) M.FormSelect.init(categoriaSelect);
 		}
 		tipoInputs.forEach(function (input) { input.addEventListener('change', atualizarCategorias); });
@@ -225,14 +219,8 @@
 			placeholderEdicao.value = '';
 			placeholderEdicao.disabled = true;
 			placeholderEdicao.selected = true;
-			if (tipoEdicao === 'Agendado') {
-			  placeholderEdicao.textContent = 'Categoria opcional para agendados';
-			  categoriaEdicao.appendChild(placeholderEdicao);
-			  categoriaEdicao.required = false;
-			  categoriaEdicao.disabled = false;
-			  ajudaCategoriaEdicao.textContent = 'A categoria não é obrigatória para lançamentos agendados.';
-			} else {
-			  var tipoCategoriaEdicao = tipoEdicao === 'Saida' ? 'Saida' : 'Entrada';
+			  {
+			  var tipoCategoriaEdicao = tipoEdicao;
 			  var categoriaAtual = categoriaEdicao.dataset.selected;
 			  var categoriasDisponiveisEdicao = 0;
 			  placeholderEdicao.textContent = 'Selecione a categoria';
@@ -252,7 +240,7 @@
 			  categoriaEdicao.disabled = categoriasDisponiveisEdicao === 0;
 			  if (categoriasDisponiveisEdicao === 0) {
 				placeholderEdicao.textContent = 'Nenhuma categoria deste tipo';
-				ajudaCategoriaEdicao.innerHTML = 'Cadastre uma categoria em <a href="categorias.php">Categorias</a>.';
+				ajudaCategoriaEdicao.innerHTML = 'Cadastre uma categoria compatível em <a href="categorias.php">Categorias</a>.';
 			  } else {
 				ajudaCategoriaEdicao.textContent = '';
 			  }

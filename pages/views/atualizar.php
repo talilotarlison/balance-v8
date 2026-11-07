@@ -54,7 +54,7 @@ $idLancamentoAtual = (int) ($idItemSolicitado ?? 0);
             <select id="edit-item-category" name="categoria_id" data-selected="<?= (int) ($arrItem[6] ?? 0) ?>" required <?= count($categoriasFormulario) === 0 ? 'disabled' : '' ?>>
               <option value="" disabled <?= empty($arrItem[6]) ? 'selected' : '' ?>>Selecione a categoria</option>
               <?php foreach ($categoriasFormulario as $categoriaEdicao): ?>
-                <option value="<?= (int) $categoriaEdicao['id'] ?>" data-tipo="<?= htmlspecialchars($categoriaEdicao['tipo'], ENT_QUOTES, 'UTF-8') ?>" <?= (int) ($arrItem[6] ?? 0) === (int) $categoriaEdicao['id'] ? 'selected' : '' ?>><?= htmlspecialchars($categoriaEdicao['nome'] . ' — ' . ($categoriaEdicao['tipo'] === 'Entrada' ? 'Entrada' : 'Saída'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="<?= (int) $categoriaEdicao['id'] ?>" data-tipo="<?= htmlspecialchars($categoriaEdicao['tipo'], ENT_QUOTES, 'UTF-8') ?>" <?= (int) ($arrItem[6] ?? 0) === (int) $categoriaEdicao['id'] ? 'selected' : '' ?>><?= htmlspecialchars($categoriaEdicao['nome'] . ' — ' . ($categoriaEdicao['tipo'] === 'Entrada' ? 'Entrada' : ($categoriaEdicao['tipo'] === 'Saida' ? 'Saída' : 'Agendado')), ENT_QUOTES, 'UTF-8') ?></option>
               <?php endforeach; ?>
             </select>
             <label for="edit-item-category">Categoria</label>

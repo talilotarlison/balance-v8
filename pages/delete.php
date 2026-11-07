@@ -1,32 +1,30 @@
 <?php
-	// sessao de usuario 
-	session_start();
+session_start();
+if (empty($_SESSION['idUser'])) {
+    header('Location: ../index.php');
+    exit;
+}
 
-	if (!isset($_SESSION['usuario'])) {
-		header('Location: index.php');
-	} 
-	
-	// Incluir arquivos
-	// Conexão com o banco de dados
-	include('../database/conexao.php');
-	include('../database/model/classDelete.php'); 
-	
-	// delete no banco de dados
-	// Verifica se o ID foi passado na URL
-	if (isset($_GET['id'])) {
-		$id = mysqli_real_escape_string($conexao, trim($_GET['id']));
-		$meusDados = new Delete($id);
-		$query = $meusDados->deletaDados();
+require_once('../database/conexao.php');
+$id = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
+$usuarioId = (int) $_SESSION['idUser'];
 
-		if (mysqli_query($conexao, $query)) {
-			$_SESSION['mensagem'] = "Deletado com sucesso!";
-		} else {
-			$_SESSION['mensagem'] = "Erro ao deletar: " . mysqli_error($conexao);
-		}
-	} else {
-		$_SESSION['mensagem'] = "ID inválido ou não fornecido!";
-	}
+if ($id === false || $id < 1) {
+    $_SESSION['mensagem'] = 'ID de lançamento inválido.';
+} else {
+    try {
+        $stmtDelete = $conexao->prepare('DELETE FROM fluxocaixa WHERE id = ? AND usuario_id = ?');
+        $stmtDelete->bind_param('ii', $id, $usuarioId);
+        if ($stmtDelete->execute() && $stmtDelete->affected_rows === 1) {
+            $_SESSION['mensagem'] = 'Lançamento excluído com sucesso.';
+        } else {
+            $_SESSION['mensagem'] = 'Lançamento não encontrado na sua conta.';
+        }
+    } catch (Throwable $exception) {
+        $_SESSION['mensagem'] = 'Não foi possível excluir este lançamento.';
+    }
+}
 
-	header('Location: lancamentos.php');
-	exit;
+header('Location: lancamentos.php');
+exit;
 ?>

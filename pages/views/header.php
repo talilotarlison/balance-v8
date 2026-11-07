@@ -9,6 +9,7 @@
             <li><a href="lancamentos.php">Lançamentos</a></li>
             <li><a href="bancos.php">Bancos</a></li>
             <li><a href="categorias.php">Categorias</a></li>
+            <li><a href="lembretes.php">Lembretes</a></li>
             <li><a href="buscar.php">Buscar</a></li>
             <li ><a href="#modal-config" class="waves-effect waves-light modal-trigger"><?= ucwords($_SESSION['usuario']);?></a></li>
             <li><i class="material-icons">account_circle</i></li>
@@ -32,6 +33,7 @@
       <li><a href="lancamentos.php"><i class="material-icons">equalizer</i>Lançamentos</a></li>
       <li><a href="bancos.php"><i class="material-icons">account_balance</i>Bancos</a></li>
       <li><a href="categorias.php"><i class="material-icons">sell</i>Categorias</a></li>
+      <li><a href="lembretes.php"><i class="material-icons">notifications</i>Lembretes</a></li>
       <li><a href="#modal-config" class="waves-effect waves-light modal-trigger btn-modal"><i class="material-icons">settings_applications</i>Configurações</a></li>
       <li><a href=""><i class="material-icons">backup</i>Backup</a></li>
       <li>
